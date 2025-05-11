@@ -9,11 +9,19 @@ import Button from '../../components/common/Button';
 const DashboardPage = () => {
   const { user, appointments, services, fetchAppointments, fetchServices } = useAppStore();
   const [today] = useState(new Date());
+  const [bookingUrl, setBookingUrl] = useState('');
+  const [copied, setCopied] = useState(false);
   
   useEffect(() => {
     fetchAppointments();
     fetchServices();
   }, [fetchAppointments, fetchServices]);
+
+  useEffect(() => {
+    // Get the current hostname
+    const hostname = window.location.origin;
+    setBookingUrl(`${hostname}/${user?.shop_slug}`);
+  }, [user?.shop_slug]);
   
   // Filter today's appointments
   const todayAppointments = appointments.filter(
@@ -23,6 +31,16 @@ const DashboardPage = () => {
   // Calculate some stats
   const totalAppointments = appointments.length;
   const totalServices = services.length;
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(bookingUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
   
   const stats = [
     {
@@ -177,17 +195,15 @@ const DashboardPage = () => {
             </p>
             <div className="mt-3 flex items-center">
               <div className="bg-white rounded p-2 flex-1 text-sm border border-primary-200">
-                agendafull.com/{user?.shop_slug}
+                {bookingUrl}
               </div>
               <Button
                 variant="primary"
                 size="sm"
                 className="ml-2"
-                onClick={() => {
-                  navigator.clipboard.writeText(`agendafull.com/${user?.shop_slug}`);
-                }}
+                onClick={handleCopyLink}
               >
-                Copiar
+                {copied ? 'Copiado!' : 'Copiar'}
               </Button>
             </div>
           </div>
