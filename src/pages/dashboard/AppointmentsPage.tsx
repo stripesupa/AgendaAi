@@ -47,14 +47,23 @@ const AppointmentsPage = () => {
       return false;
     }
   };
+
+  const formatDateSafely = (date: Date, formatStr: string, options = {}): string => {
+    try {
+      if (!isValid(date)) return '--';
+      return format(date, formatStr, options);
+    } catch {
+      return '--';
+    }
+  };
   
   // Get appointments for the selected date
   const filteredAppointments = appointments.filter((appointment) => {
     if (!isValidAppointmentDate(appointment.start_time)) return false;
     try {
-      return isSameDay(parseISO(appointment.start_time!), selectedDate);
-    } catch (error) {
-      console.error('Invalid date format for appointment:', appointment);
+      const appointmentDate = parseISO(appointment.start_time!);
+      return isValid(appointmentDate) && isSameDay(appointmentDate, selectedDate);
+    } catch {
       return false;
     }
   });
@@ -63,11 +72,11 @@ const AppointmentsPage = () => {
   const sortedAppointments = [...filteredAppointments].sort((a, b) => {
     if (!isValidAppointmentDate(a.start_time) || !isValidAppointmentDate(b.start_time)) return 0;
     try {
-      const aTime = parseISO(a.start_time!).getTime();
-      const bTime = parseISO(b.start_time!).getTime();
-      return aTime - bTime;
-    } catch (error) {
-      console.error('Error sorting appointments:', error);
+      const aDate = parseISO(a.start_time!);
+      const bDate = parseISO(b.start_time!);
+      if (!isValid(aDate) || !isValid(bDate)) return 0;
+      return aDate.getTime() - bDate.getTime();
+    } catch {
       return 0;
     }
   });
@@ -77,9 +86,9 @@ const AppointmentsPage = () => {
     return appointments.filter((appointment) => {
       if (!isValidAppointmentDate(appointment.start_time)) return false;
       try {
-        return isSameDay(parseISO(appointment.start_time!), date);
-      } catch (error) {
-        console.error('Invalid date format for appointment count:', appointment);
+        const appointmentDate = parseISO(appointment.start_time!);
+        return isValid(appointmentDate) && isSameDay(appointmentDate, date);
+      } catch {
         return false;
       }
     }).length;
@@ -106,7 +115,7 @@ const AppointmentsPage = () => {
           </Button>
           
           <div className="text-sm md:text-base font-medium text-gray-900">
-            {format(weekDates[0], "dd 'de' MMMM", { locale: ptBR })} - {format(weekDates[6], "dd 'de' MMMM", { locale: ptBR })}
+            {formatDateSafely(weekDates[0], "dd 'de' MMMM", { locale: ptBR })} - {formatDateSafely(weekDates[6], "dd 'de' MMMM", { locale: ptBR })}
           </div>
           
           <Button 
@@ -132,7 +141,7 @@ const AppointmentsPage = () => {
             >
               <div className="text-center">
                 <p className="text-xs text-gray-500">
-                  {format(date, 'E', { locale: ptBR })}
+                  {formatDateSafely(date, 'E', { locale: ptBR })}
                 </p>
                 <p
                   className={`mt-1 font-semibold text-sm ${
@@ -141,7 +150,7 @@ const AppointmentsPage = () => {
                       : 'text-gray-900'
                   }`}
                 >
-                  {format(date, 'd')}
+                  {formatDateSafely(date, 'd')}
                 </p>
                 
                 {appointmentCounts[i] > 0 && (
@@ -158,7 +167,7 @@ const AppointmentsPage = () => {
         
         <div className="p-4">
           <h3 className="text-lg font-medium text-gray-900 mb-4">
-            {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+            {formatDateSafely(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
           </h3>
           
           {isLoading ? (
