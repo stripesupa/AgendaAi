@@ -244,20 +244,27 @@ export async function createAppointment(appointment: {
 }
 
 export async function getBarberBySlug(slug: string) {
-  const { data, error } = await supabase
-    .from('users')
-    .select(`
-      id,
-      email,
-      shop_name,
-      shop_slug,
-      subscription_status
-    `)
-    .eq('shop_slug', slug)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select(`
+        id,
+        email,
+        shop_name,
+        shop_slug,
+        subscription_status
+      `)
+      .eq('shop_slug', slug)
+      .maybeSingle(); // Use maybeSingle() instead of single() to handle null case
 
-  if (error) throw error;
-  return data;
+    if (error) throw error;
+    
+    // Return null if no barber was found
+    return data;
+  } catch (error) {
+    console.error('Error fetching barber by slug:', error);
+    return null;
+  }
 }
 
 export async function updateAppointmentStatus(appointmentId: string, status: 'scheduled' | 'cancelled' | 'completed') {
